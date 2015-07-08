@@ -1334,7 +1334,23 @@ _LP_RUNTIME_LAST_SECONDS=$SECONDS
 
 _lp_runtime()
 {
+
     [[ "$LP_ENABLE_RUNTIME" != 1 ]] && return
+
+    echo "frist test: _LP_RUNTIME_START = $_LP_RUNTIME_START" >&2
+    if $_LP_SHELL_zsh && [ $_LP_RUNTIME_START ]; then
+        echo "il se passe qqch" >&2
+        echo "_LP_RUNTIME_START = $_LP_RUNTIME_START" >&2
+        _LP_RUNTIME_SECONDS=$(($SECONDS - $_LP_RUNTIME_START))
+    fi
+
+    export _LP_RUNTIME_START=0
+    unset _LP_RUNTIME_START
+
+    echo "unset _LP_RUNTIME_START = $_LP_RUNTIME_START" >&2
+    echo "_LP_RUNTIME_SECONDS = $_LP_RUNTIME_SECONDS" >&2
+    echo "SECONDS = $SECONDS" >&2
+
     if [[ $_LP_RUNTIME_SECONDS -ge $LP_RUNTIME_THRESHOLD ]]
     then
         echo -ne "${LP_COLOR_RUNTIME}"
@@ -1361,10 +1377,28 @@ _lp_reset_runtime()
     _LP_RUNTIME_COMMAND_EXECUTED=$?
 }
 
-if [ "$LP_ENABLE_RUNTIME" = 1 ]
+_lp_reset_runtime_zsh()
+{
+        echo "Executing a valid command." >&2
+        #echo "---" >&2
+        _LP_RUNTIME_START=$SECONDS
+        echo "_LP_RUNTIME_START = $_LP_RUNTIME_START" >&2
+        echo "SECONDS = $SECONDS" >&2
+        echo "---" >&2
+        #echo !! >&2
+}
+if [ "$LP_ENABLE_RUNTIME" = 1 ] && $_LP_SHELL_bash
 then
     # _lp_reset_runtime gets called whenever bash executes a command
     trap '_lp_reset_runtime' DEBUG
+elif [ "$LP_ENABLE_RUNTIME" = 1 ] && $_LP_SHELL_zsh
+then
+    # preexec is executed by zsh before executing a valid command
+    #trap '_lp_reset_runtime_zsh' DEBUG
+
+    preexec () {
+        _lp_reset_runtime_zsh
+    }
 fi
 
 ###############
@@ -1623,7 +1657,10 @@ _lp_set_prompt()
         LP_SCLS=
     fi
 
+    _LP_RUNTIME_START=
+    echo "avant dans le main: $_LP_RUNTIME_START" >&2
     LP_RUNTIME=$(_lp_sl "$(_lp_runtime)")
+    echo "apres dans le main: $_LP_RUNTIME_START" >&2
 
     # if change of working directory
     if [[ "$LP_OLD_PWD" != "LP:$PWD" ]]; then
