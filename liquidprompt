@@ -311,17 +311,18 @@ _lp_source_config()
     local back_none=$((${#back_colors[@]}-1))
 
     local name
+    local cmdf
+    local cmdb
+    local pref
+    local f=${fore_colors[f_i]}
+    local b=${back_colors[b_i]}
+
     for f_i in $(seq 0 ${fore_none} ); do
-        local f=${fore_colors[f_i]}
 
         for b_i in $(seq 0 $back_none ); do
-            local b=${back_colors[b_i]}
 
             # Avoid unreadable colors, like RED_ON_RED
             if [[ $f_i != $b_i ]] ; then
-                local cmdf
-                local cmdb
-                local pref
 
                 if (( $f_i < $fore_none )) ; then # it is a color
                     if (( $f_i > $last_base )) ; then # it is bold
